@@ -37,7 +37,7 @@ activities = {
         "description": "Physical education and sports activities",
         "schedule": "Mondays, Wednesdays, Fridays, 2:00 PM - 3:00 PM",
         "max_participants": 30,
-        "participants": ["john@mergington.edu", "olivia@mergington.edu"]
+        "participants": []
     },
     "Basketball Team": {
         "description": "Competitive basketball team for school tournaments",
@@ -88,6 +88,7 @@ def get_activities():
     return activities
 
 
+
 @app.post("/activities/{activity_name}/signup")
 def signup_for_activity(activity_name: str, email: str):
     """Sign up a student for an activity"""
@@ -104,4 +105,21 @@ def signup_for_activity(activity_name: str, email: str):
     
     # Validate activity is not full
     if len(activity["participants"]) >= activity["max_participants"]:
-        return {"message": f"Signed up {email} for {activity_name}"}
+        raise HTTPException(status_code=400, detail="Activity is full")
+
+    # Add student
+    activity["participants"].append(email)
+    return {"message": f"Signed up {email} for {activity_name}"}
+
+
+# Unregister a participant from an activity
+@app.post("/activities/{activity_name}/unregister")
+def unregister_for_activity(activity_name: str, email: str):
+    """Remove a student from an activity"""
+    if activity_name not in activities:
+        raise HTTPException(status_code=404, detail="Activity not found")
+    activity = activities[activity_name]
+    if email not in activity["participants"]:
+        raise HTTPException(status_code=404, detail="Participant not found in this activity")
+    activity["participants"].remove(email)
+    return {"message": f"Removed {email} from {activity_name}"}
